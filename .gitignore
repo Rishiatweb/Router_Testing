@@ -1,0 +1,6 @@
+﻿__pycache__/
+outputs/
+project_secrets.py
+*.env
+.venv/
+venv/
