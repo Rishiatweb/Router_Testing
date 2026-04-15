@@ -1,24 +1,43 @@
-﻿import json
+import json
 import os
+
 import streamlit as st
-from core_logic import extract_pdf_form_fields, extract_pdf_text, evolve_mappings, fill_pdf_form
+
+from core_logic import (
+    evolve_mappings,
+    extract_pdf_form_fields,
+    extract_pdf_text,
+    fill_pdf_form,
+    get_runtime_configuration,
+)
 
 st.set_page_config(
     page_title="PDF Form ETTC",
     page_icon="",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
 )
 
 st.title("PDF Form ETTC (Azure)")
 st.markdown("Evolutionary test-time compute for PDF form filling using Azure AI Inference.")
+
+runtime_config = get_runtime_configuration()
+if runtime_config["mode"] != "azure":
+    missing = ", ".join(runtime_config["missing"]) or "none"
+    st.warning(
+        f"Azure configuration not detected. Running in local heuristic mode. Missing: {missing}"
+    )
 
 st.sidebar.header("Run Settings")
 generations = st.sidebar.slider("Generations", min_value=1, max_value=6, value=3)
 population = st.sidebar.slider("Population", min_value=2, max_value=10, value=5)
 
 uploaded = st.file_uploader("Upload a fillable PDF", type=["pdf"])
-user_data_raw = st.text_area("User data JSON", height=180, value='{"first_name": "Ada", "last_name": "Lovelace", "dob": "1815-12-10", "email": "ada@example.com"}')
+user_data_raw = st.text_area(
+    "User data JSON",
+    height=180,
+    value='{"first_name": "Ada", "last_name": "Lovelace", "dob": "1815-12-10", "email": "ada@example.com"}',
+)
 
 if uploaded and user_data_raw:
     try:
@@ -41,7 +60,13 @@ if uploaded and user_data_raw:
 
     if st.button("Run ETTC"):
         with st.spinner("Running evolutionary loop..."):
-            candidates = evolve_mappings(fields, user_data, form_text, generations=generations, population=population)
+            candidates = evolve_mappings(
+                fields,
+                user_data,
+                form_text,
+                generations=generations,
+                population=population,
+            )
 
         best = candidates[0]
         st.subheader("Best Mapping")
